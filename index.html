@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nutsa — Stock Matières</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Fraunces:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7;--paper-warm:#F5F1E8;--ink:#1A1A1A;--ink-soft:#5A5A5A;--ink-muted:#9A9A9A;
+  --rule:#E8E4DC;--rule-soft:#F0EDE6;
+  --red:#B6342B;--red-tint:rgba(182,52,43,.1);
+  --green:#4F6B3A;--green-mid:#7E9B5C;--green-tint:rgba(79,107,58,.12);
+  --gold:#C4A04A;--gold-deep:#8A6D1F;--gold-tint:rgba(196,160,74,.14);
+  --blue:#3E6FA5;--blue-tint:rgba(62,111,165,.12);
+  --display:"Fraunces",Georgia,serif;--body:"Manrope",system-ui,sans-serif;
+  --mono:"DM Mono",monospace;--radius:14px;--shadow:0 2px 12px rgba(26,26,26,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+#login-screen{position:fixed;inset:0;z-index:100;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#login-screen::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.04) 1px,transparent 0);background-size:28px 28px;pointer-events:none}
+.login-brand{text-align:center;margin-bottom:40px;position:relative;z-index:1}
+.login-brand .logo{font-family:var(--display);font-weight:300;font-size:48px;color:#fff;letter-spacing:-.03em}
+.login-brand .logo em{font-style:italic;color:var(--red)}
+.login-brand .sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:10px;font-weight:600}
+.login-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px;width:340px;position:relative;z-index:1}
+.pin-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:600;margin-bottom:12px;text-align:center}
+.pin-display{display:flex;justify-content:center;gap:12px;margin-bottom:24px;height:14px;align-items:center}
+.pin-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.3);transition:all .15s}
+.pin-dot.filled{background:#fff;border-color:#fff;transform:scale(1.1)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{padding:16px 8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-family:var(--mono);font-size:20px;cursor:pointer;transition:all .15s;text-align:center;user-select:none}
+.pin-key:active{transform:scale(.94)}
+.pin-key.backspace{font-size:16px;color:rgba(255,255,255,.5)}
+.pin-key.submit{background:var(--red);border-color:var(--red);font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.pin-key.zero{grid-column:2}
+.login-error{margin-top:18px;padding:12px 16px;background:rgba(182,52,43,.2);border:1px solid rgba(182,52,43,.4);border-radius:8px;color:#ff8a80;font-size:13px;font-weight:600;text-align:center;display:none}
+.login-error.show{display:block}
+#app-screen{display:none;flex-direction:column;min-height:100vh}
+.app-header{background:var(--ink);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.header-brand{font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-.02em}
+.header-brand em{font-style:italic;color:var(--red)}
+.header-right{display:flex;align-items:center;gap:12px}
+.worker-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:5px 12px;color:rgba(255,255,255,.5);font-family:var(--body);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.1em;text-transform:uppercase}
+.logout-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.alerts-bar{background:var(--red-tint);border-bottom:2px solid var(--red);padding:12px 24px;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+.alerts-bar.show{display:flex}
+.alert-badge{background:var(--red);color:#fff;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.alert-items{font-size:13px;font-weight:600;color:var(--red);flex:1}
+.tabs{background:#fff;border-bottom:1px solid var(--rule);padding:0 24px;display:flex}
+.tab-btn{padding:14px 20px;border:none;border-bottom:2px solid transparent;background:none;font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer;transition:all .2s;margin-bottom:-1px}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--ink)}
+.main-content{padding:24px;max-width:1200px;margin:0 auto;width:100%}
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.summary-card{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);padding:18px 20px}
+.summary-card .s-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted);font-weight:700;margin-bottom:8px}
+.summary-card .s-val{font-family:var(--display);font-weight:500;font-size:28px;letter-spacing:-.02em;color:var(--ink)}
+.summary-card .s-val.red{color:var(--red)}
+.summary-card .s-val.green{color:var(--green)}
+.summary-card .s-val.gold{color:var(--gold-deep)}
+
+/* Materials table */
+.materials-table-wrap{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;margin-bottom:28px}
+.materials-table-head{padding:20px 24px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.materials-table-head h3{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.materials-table-head h3 em{font-style:italic;color:var(--red)}
+.add-material-btn{padding:8px 16px;border-radius:8px;border:1.5px dashed var(--rule);background:transparent;color:var(--ink-soft);font-family:var(--body);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.add-material-btn:hover{border-color:var(--ink);color:var(--ink)}
+.mat-table{width:100%;border-collapse:collapse}
+.mat-table th{text-align:left;padding:10px 24px;background:var(--paper-warm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;border-bottom:1px solid var(--rule)}
+.mat-table td{padding:16px 24px;border-top:1px solid var(--rule-soft);vertical-align:middle}
+.mat-table tbody tr:hover{background:var(--paper-warm)}
+.mat-name{font-weight:700;font-size:14px;color:var(--ink)}
+.mat-qty{font-family:var(--display);font-weight:500;font-size:22px;letter-spacing:-.02em}
+.mat-qty.low{color:var(--gold-deep)}
+.mat-qty.out{color:var(--red)}
+.mat-unit{font-size:12px;color:var(--ink-muted);font-weight:600;margin-left:4px}
+.mat-badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.mat-badge.ok{background:var(--green-tint);color:var(--green)}
+.mat-badge.low{background:var(--gold-tint);color:var(--gold-deep)}
+.mat-badge.out{background:var(--red-tint);color:var(--red)}
+.mat-actions{display:flex;gap:8px;align-items:center}
+.qty-btn{width:32px;height:32px;border-radius:7px;border:1.5px solid var(--rule);background:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--ink)}
+.qty-btn.minus:hover{border-color:var(--red);color:var(--red)}
+.qty-btn.plus:hover{border-color:var(--green);color:var(--green)}
+.qty-input{width:70px;padding:7px 10px;border:1.5px solid var(--rule);border-radius:7px;font-family:var(--mono);font-size:14px;text-align:center;color:var(--ink);outline:none}
+.qty-input:focus{border-color:var(--ink)}
+.save-btn{padding:8px 14px;border-radius:7px;border:none;background:var(--green);color:#fff;font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.save-btn:hover{background:var(--green-mid)}
+.mat-bar-wrap{width:120px;height:6px;background:var(--rule-soft);border-radius:999px;overflow:hidden}
+.mat-bar{height:100%;border-radius:999px}
+.mat-bar.ok{background:linear-gradient(90deg,var(--green),var(--green-mid))}
+.mat-bar.low{background:var(--gold)}
+.mat-bar.out{background:var(--red)}
+
+/* Add material modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(26,26,26,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(26,26,26,.2)}
+.modal-box h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0 0 20px}
+.modal-box h3 em{font-style:italic;color:var(--red)}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--rule);border-radius:9px;font-family:var(--body);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--ink)}
+select.form-input{cursor:pointer}
+.modal-foot{display:flex;gap:12px;margin-top:20px}
+.btn-primary{flex:1;padding:13px;border-radius:9px;border:none;background:var(--ink);color:#fff;font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:var(--red)}
+.btn-ghost{padding:13px 18px;border-radius:9px;border:1.5px solid var(--rule);background:transparent;color:var(--ink-soft);font-family:var(--body);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+
+/* History */
+.history-panel{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.history-head{padding:20px 24px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+.history-head h3{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.history-head h3 em{font-style:italic;color:var(--red)}
+.h-table{width:100%;border-collapse:collapse}
+.h-table th{text-align:left;padding:10px 24px;background:var(--paper-warm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;border-bottom:1px solid var(--rule)}
+.h-table td{padding:14px 24px;border-top:1px solid var(--rule-soft);font-size:13px}
+.h-table tbody tr:hover{background:var(--paper-warm)}
+.chg-pos{color:var(--green);font-weight:700}
+.chg-neg{color:var(--red);font-weight:700}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:300;background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.06em;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.loading-state{text-align:center;padding:60px;color:var(--ink-muted);font-size:14px;font-weight:600}
+.spinner{display:inline-block;width:28px;height:28px;border:2.5px solid var(--rule);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:680px){.summary-strip{grid-template-columns:repeat(2,1fr)}.mat-bar-wrap{display:none}.mat-actions{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-brand">
+    <div class="logo">Nu<em>t</em>sa</div>
+    <div class="sub">Stock Matières · Gestion des stocks</div>
+  </div>
+  <div class="login-box">
+    <div class="pin-label">Code PIN — Responsable Stock</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key backspace" onclick="pinBackspace()">⌫</button>
+      <button class="pin-key zero" onclick="pinKey('0')">0</button>
+      <button class="pin-key submit" onclick="submitPin()">OK</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="app-header">
+    <div class="header-brand">Nu<em>t</em>sa <span style="font-size:13px;opacity:.5;font-weight:400;letter-spacing:.1em">· MATIÈRES</span></div>
+    <div class="header-right">
+      <div class="worker-chip">Responsable Stock</div>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="alerts-bar" id="alerts-bar">
+    <span class="alert-badge">⚠ Stock bas</span>
+    <span class="alert-items" id="alert-items"></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('stock')" id="tab-stock">🧪 Stock matières</button>
+    <button class="tab-btn" onclick="showTab('history')" id="tab-history">📋 Historique</button>
+  </div>
+
+  <div class="main-content">
+
+    <!-- STOCK TAB -->
+    <div id="tab-content-stock">
+      <div class="summary-strip">
+        <div class="summary-card"><div class="s-label">Total matières</div><div class="s-val" id="sum-total">—</div></div>
+        <div class="summary-card"><div class="s-label">Stock OK</div><div class="s-val green" id="sum-ok">—</div></div>
+        <div class="summary-card"><div class="s-label">Stock bas</div><div class="s-val gold" id="sum-low">—</div></div>
+        <div class="summary-card"><div class="s-label">Épuisé</div><div class="s-val red" id="sum-out">—</div></div>
+      </div>
+
+      <div class="materials-table-wrap">
+        <div class="materials-table-head">
+          <h3>Matières <em>premières</em></h3>
+          <button class="add-material-btn" onclick="openAddModal()">+ Ajouter une matière</button>
+        </div>
+        <table class="mat-table">
+          <thead>
+            <tr>
+              <th>Matière</th>
+              <th>Stock actuel</th>
+              <th class="hide-mobile">Niveau</th>
+              <th>Statut</th>
+              <th>Ajuster</th>
+            </tr>
+          </thead>
+          <tbody id="mat-body">
+            <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--ink-muted)"><div class="spinner"></div><br>Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-content-history" style="display:none">
+      <div class="history-panel">
+        <div class="history-head">
+          <h3>Historique <em>matières</em></h3>
+          <button class="save-btn" onclick="loadHistory()" style="background:var(--ink)">↻ Actualiser</button>
+        </div>
+        <table class="h-table">
+          <thead><tr><th>Date</th><th>Matière</th><th>Mouvement</th><th>Motif</th><th>Stock après</th></tr></thead>
+          <tbody id="history-body">
+            <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD MATERIAL MODAL -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3>Nouvelle <em>matière</em></h3>
+    <div class="form-group">
+      <label class="form-label">Nom de la matière</label>
+      <input type="text" id="mat-name-input" class="form-input" placeholder="ex: Pistaches, Chocolat…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Unité de mesure</label>
+      <select id="mat-unit-input" class="form-input">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+        <option value="L">L</option>
+        <option value="unités">unités</option>
+        <option value="boîtes">boîtes</option>
+        <option value="sacs">sacs</option>
+        <option value="rouleaux">rouleaux</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantité initiale</label>
+      <input type="number" id="mat-qty-input" class="form-input" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Seuil d'alerte (stock bas)</label>
+      <input type="number" id="mat-threshold-input" class="form-input" placeholder="20" min="0">
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeAddModal()">Annuler</button>
+      <button class="btn-primary" onclick="addMaterial()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = {
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxc8Bxw0eFXX595oSEB02OhPaLRSZAHQ7DUC398bfZKwWm82Tlx5dFqGTi2G-33_zt_/exec',
+  LOW_STOCK_THRESHOLD: 20,
+  WORKER: 3,
+  token: null
+};
+
+// AUTH
+let pinBuffer='';
+function pinKey(k){if(pinBuffer.length>=4)return;pinBuffer+=k;updateDots();if(pinBuffer.length===4)setTimeout(submitPin,150);}
+function pinBackspace(){pinBuffer=pinBuffer.slice(0,-1);updateDots();}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.toggle('filled',i<pinBuffer.length);}
+function clearPin(){pinBuffer='';updateDots();document.getElementById('login-error').classList.remove('show');}
+async function submitPin(){
+  if(pinBuffer.length!==4){showLoginError('Entrez 4 chiffres.');return;}
+  try{
+    const res=await gasGet({action:'worker_login',worker:CONFIG.WORKER,pin:pinBuffer});
+    if(res.ok){CONFIG.token=res.token;localStorage.setItem('nutsa_mat_token',res.token);enterApp();}
+    else{showLoginError('PIN incorrect.');clearPin();}
+  }catch(e){showLoginError('Erreur connexion.');clearPin();}
+}
+function showLoginError(msg){
+  const el=document.getElementById('login-error');el.textContent=msg;el.classList.add('show');
+  document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='var(--red)';d.style.borderColor='var(--red)';});
+  setTimeout(()=>document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='';d.style.borderColor='';}),600);
+}
+function logout(){localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';clearPin();}
+function enterApp(){document.getElementById('login-screen').style.display='none';const a=document.getElementById('app-screen');a.style.display='flex';a.style.flexDirection='column';loadMaterials();}
+
+// GAS
+async function gasGet(p){const url=new URL(CONFIG.GAS_URL);Object.keys(p).forEach(k=>url.searchParams.set(k,p[k]));if(CONFIG.token)url.searchParams.set('wtoken',CONFIG.token);const r=await fetch(url.toString(),{redirect:'follow'});return r.json();}
+async function gasPost(b){if(CONFIG.token)b.wtoken=CONFIG.token;const r=await fetch(CONFIG.GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b),redirect:'follow'});return r.json();}
+
+// TABS
+function showTab(t){
+  ['stock','history'].forEach(id=>{
+    document.getElementById('tab-content-'+id).style.display=id===t?'block':'none';
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+  });
+  if(t==='history')loadHistory();
+}
+
+// MATERIALS
+let matsData=[];
+async function loadMaterials(){
+  document.getElementById('mat-body').innerHTML='<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--ink-muted)"><div class="spinner"></div><br>Chargement…</td></tr>';
+  try{
+    const res=await gasGet({action:'get_materials'});
+    if(res.ok){matsData=res.materials||[];renderMaterials();}
+    else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+function renderMaterials(){
+  const low=matsData.filter(m=>m.qty>0&&m.qty<(m.threshold||CONFIG.LOW_STOCK_THRESHOLD));
+  const out=matsData.filter(m=>m.qty<=0);
+  const ok=matsData.filter(m=>m.qty>=(m.threshold||CONFIG.LOW_STOCK_THRESHOLD));
+  document.getElementById('sum-total').textContent=matsData.length;
+  document.getElementById('sum-ok').textContent=ok.length;
+  document.getElementById('sum-low').textContent=low.length;
+  document.getElementById('sum-out').textContent=out.length;
+
+  const alerts=[...out.map(m=>m.name+' (épuisé)'),...low.map(m=>m.name+' ('+m.qty+' '+m.unit+')')];
+  const bar=document.getElementById('alerts-bar');
+  if(alerts.length){bar.classList.add('show');document.getElementById('alert-items').textContent=alerts.join(' · ');}
+  else bar.classList.remove('show');
+
+  const maxQty=Math.max(...matsData.map(m=>m.qty),(CONFIG.LOW_STOCK_THRESHOLD*3));
+  document.getElementById('mat-body').innerHTML=matsData.length?matsData.map(m=>{
+    const thresh=m.threshold||CONFIG.LOW_STOCK_THRESHOLD;
+    const level=m.qty<=0?'out':m.qty<thresh?'low':'ok';
+    const pct=Math.min((m.qty/maxQty)*100,100);
+    const labels={ok:'OK',low:'Bas',out:'Épuisé'};
+    return `<tr>
+      <td><div class="mat-name">${m.name}</div></td>
+      <td><span class="mat-qty ${level}">${m.qty}</span><span class="mat-unit">${m.unit}</span></td>
+      <td class="hide-mobile"><div class="mat-bar-wrap"><div class="mat-bar ${level}" style="width:${pct}%"></div></div></td>
+      <td><span class="mat-badge ${level}">${labels[level]}</span></td>
+      <td>
+        <div class="mat-actions">
+          <button class="qty-btn minus" onclick="adjustMat('${m.id}',-1)">−</button>
+          <input type="number" class="qty-input" id="mq-${m.id}" value="1" min="0.1" step="0.1">
+          <button class="qty-btn plus" onclick="adjustMat('${m.id}',1)">+</button>
+          <button class="save-btn" onclick="saveMat('${m.id}')">+ Entrée</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--ink-muted)">Aucune matière enregistrée. Cliquez "+ Ajouter" pour commencer.</td></tr>';
+}
+
+async function adjustMat(id,dir){
+  const input=document.getElementById('mq-'+id);
+  const qty=parseFloat(input.value)||1;
+  const mat=matsData.find(m=>m.id===id);if(!mat)return;
+  const newQty=Math.max(0,parseFloat((mat.qty+(dir*qty)).toFixed(2)));
+  await updateMaterial(id,newQty,dir>0?'Ajout manuel':'Retrait manuel');
+}
+
+async function saveMat(id){
+  const input=document.getElementById('mq-'+id);
+  const qty=parseFloat(input.value)||1;
+  const mat=matsData.find(m=>m.id===id);if(!mat)return;
+  const newQty=parseFloat((mat.qty+qty).toFixed(2));
+  await updateMaterial(id,newQty,'Entrée stock');
+}
+
+async function updateMaterial(id,newQty,reason){
+  showToast('Mise à jour…');
+  try{
+    const res=await gasPost({action:'update_material',material_id:id,qty:newQty,reason:reason,worker:CONFIG.WORKER});
+    if(res.ok){const m=matsData.find(m=>m.id===id);if(m)m.qty=newQty;renderMaterials();showToast('Stock mis à jour ✓','success');}
+    else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+// ADD MATERIAL MODAL
+function openAddModal(){document.getElementById('add-modal').classList.add('open');}
+function closeAddModal(){document.getElementById('add-modal').classList.remove('open');}
+
+async function addMaterial(){
+  const name=document.getElementById('mat-name-input').value.trim();
+  const unit=document.getElementById('mat-unit-input').value;
+  const qty=parseFloat(document.getElementById('mat-qty-input').value)||0;
+  const threshold=parseFloat(document.getElementById('mat-threshold-input').value)||CONFIG.LOW_STOCK_THRESHOLD;
+  if(!name){showToast('Entrez un nom','error');return;}
+  showToast('Ajout…');
+  try{
+    const res=await gasPost({action:'add_material',name,unit,qty,threshold,worker:CONFIG.WORKER});
+    if(res.ok){closeAddModal();await loadMaterials();showToast('Matière ajoutée ✓','success');}
+    else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+// HISTORY
+async function loadHistory(){
+  document.getElementById('history-body').innerHTML='<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Chargement…</td></tr>';
+  try{
+    const res=await gasGet({action:'get_materials_history'});
+    if(res.ok){
+      const rows=res.history||[];
+      document.getElementById('history-body').innerHTML=rows.length?rows.map(r=>`
+        <tr>
+          <td style="color:var(--ink-muted);font-size:12px">${r.date||'—'}</td>
+          <td style="font-weight:600">${r.material||'—'}</td>
+          <td class="${r.change>0?'chg-pos':'chg-neg'}">${r.change>0?'+':''}${r.change} ${r.unit||''}</td>
+          <td style="color:var(--ink-soft)">${r.reason||'—'}</td>
+          <td style="font-family:var(--mono)">${r.after} ${r.unit||''}</td>
+        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Aucun mouvement.</td></tr>';
+    }
+  }catch(e){showToast('Erreur chargement','error');}
+}
+
+// TOAST
+let toastT;
+function showToast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// BOOT
+window.addEventListener('load',()=>{
+  const token=localStorage.getItem('nutsa_mat_token');
+  if(token){CONFIG.token=token;enterApp();}
+});
+</script>
+</body>
+</html>
