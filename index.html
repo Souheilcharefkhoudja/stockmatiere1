@@ -134,7 +134,7 @@ select.form-input{cursor:pointer}
 .loading-state{text-align:center;padding:60px;color:var(--ink-muted);font-size:14px;font-weight:600}
 .spinner{display:inline-block;width:28px;height:28px;border:2.5px solid var(--rule);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:680px){.summary-strip{grid-template-columns:repeat(2,1fr)}.mat-bar-wrap{display:none}.mat-actions{flex-wrap:wrap}}
+@media(max-width:680px){.summary-strip{grid-template-columns:repeat(2,1fr)}.mat-bar-wrap{display:none}.hide-mobile{display:none}.mat-actions{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -308,7 +308,7 @@ function showLoginError(msg){
   setTimeout(()=>document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='';d.style.borderColor='';}),600);
 }
 function logout(){localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';clearPin();}
-function enterApp(){document.getElementById('login-screen').style.display='none';const a=document.getElementById('app-screen');a.style.display='flex';a.style.flexDirection='column';loadMaterials();}
+function enterApp(skipLoad){document.getElementById('login-screen').style.display='none';const a=document.getElementById('app-screen');a.style.display='flex';a.style.flexDirection='column';if(skipLoad){renderMaterials();}else{loadMaterials();}}
 
 // GAS
 async function gasGet(p){const url=new URL(CONFIG.GAS_URL);Object.keys(p).forEach(k=>url.searchParams.set(k,p[k]));if(CONFIG.token)url.searchParams.set('wtoken',CONFIG.token);const r=await fetch(url.toString(),{redirect:'follow'});return r.json();}
@@ -337,7 +337,7 @@ async function loadMaterials(){
 function renderMaterials(){
   const low=matsData.filter(m=>m.qty>0&&m.qty<(m.threshold||CONFIG.LOW_STOCK_THRESHOLD));
   const out=matsData.filter(m=>m.qty<=0);
-  const ok=matsData.filter(m=>m.qty>=(m.threshold||CONFIG.LOW_STOCK_THRESHOLD));
+  const ok=matsData.filter(m=>m.qty>0&&m.qty>=(m.threshold||CONFIG.LOW_STOCK_THRESHOLD));
   document.getElementById('sum-total').textContent=matsData.length;
   document.getElementById('sum-ok').textContent=ok.length;
   document.getElementById('sum-low').textContent=low.length;
@@ -443,7 +443,7 @@ window.addEventListener('load',()=>{
   if(token){
     CONFIG.token=token;
     gasGet({action:'get_materials'}).then(res=>{
-      if(res.ok){enterApp();}
+      if(res.ok){matsData=res.materials||[];enterApp(true);}
       else{localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;}
     }).catch(()=>{localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;});
   }
