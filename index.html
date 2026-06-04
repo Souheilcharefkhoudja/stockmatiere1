@@ -287,6 +287,8 @@ const CONFIG = {
   WORKER: 3,
   token: null
 };
+let lastHash = '';
+let pollInterval = null;
 
 // AUTH
 let pinBuffer='';
@@ -307,8 +309,8 @@ function showLoginError(msg){
   document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='var(--red)';d.style.borderColor='var(--red)';});
   setTimeout(()=>document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='';d.style.borderColor='';}),600);
 }
-function logout(){localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';clearPin();}
-function enterApp(skipLoad){document.getElementById('login-screen').style.display='none';const a=document.getElementById('app-screen');a.style.display='flex';a.style.flexDirection='column';if(skipLoad){renderMaterials();}else{loadMaterials();}}
+function logout(){stopPolling();localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';clearPin();}
+function enterApp(skipLoad){document.getElementById('login-screen').style.display='none';const a=document.getElementById('app-screen');a.style.display='flex';a.style.flexDirection='column';if(skipLoad){renderMaterials();}else{loadMaterials();startPolling();}}
 
 // GAS
 async function gasGet(p){const url=new URL(CONFIG.GAS_URL);Object.keys(p).forEach(k=>url.searchParams.set(k,p[k]));if(CONFIG.token)url.searchParams.set('wtoken',CONFIG.token);const r=await fetch(url.toString(),{redirect:'follow'});return r.json();}
@@ -448,6 +450,22 @@ window.addEventListener('load',()=>{
     }).catch(()=>{localStorage.removeItem('nutsa_mat_token');CONFIG.token=null;});
   }
 });
+async function smartPoll() {
+  try {
+    const res = await gasGet({ action: 'get_materials' });
+    if (!res.ok) return;
+    const newHash = JSON.stringify(res.materials);
+    if (newHash !== lastHash) {
+      lastHash = newHash;
+      matsData = res.materials || [];
+      renderMaterials();
+      showToast('Stock mis à jour ✓', 'success');
+    }
+  } catch(e) {
+    console.warn('Poll failed:', e);
+  }
+}
+
 </script>
 </body>
 </html>
